@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# VS Code
+.vscode/
+
+# Ignore local modifications, but keep template files
+.devcontainer/*
+
+# Environment files
+.env
+.venv/
+venv/
+env/
+Pipfile.lock
+poetry.lock
+
+# System / OS files
+.DS_Store
+Thumbs.db

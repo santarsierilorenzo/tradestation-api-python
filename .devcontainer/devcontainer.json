@@ -1,0 +1,30 @@
+{
+  "name": "${localWorkspaceFolderBasename}",
+
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..",
+    "options": [
+      "--tag",
+      "${localWorkspaceFolderBasename}:latest"
+    ]
+  },
+
+  "runArgs": [
+    "--name",
+    "${localWorkspaceFolderBasename}"
+  ],
+
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/${localWorkspaceFolderBasename},type=bind"
+  ],
+
+  "workspaceFolder": "/${localWorkspaceFolderBasename}",
+  "remoteUser": "myuser",
+
+  "containerEnv": {
+    "PYTHONPATH": "/${localWorkspaceFolderBasename}"
+  },
+
+  "postCreateCommand": "./setup.sh"
+}
