@@ -314,3 +314,46 @@ class MarketDataAPI:
 
             return response
 
+    def get_symbol_details(
+        self,
+        *,
+        symbols: list[str]
+    ) -> Dict:
+        """
+        Retrieve detailed metadata for one or more market symbols.
+
+        Parameters
+        ----------
+        symbols : list[str]
+            A list of market symbols (e.g., ["AAPL", "MSFT"]).
+
+        Returns
+        -------
+        dict
+            JSON response with symbol metadata.
+
+        Raises
+        ------
+        ValueError
+            If no symbols are provided or the list exceeds API limits.
+        requests.exceptions.RequestException
+            If the HTTP request fails or the server returns an error.
+        """
+        if not symbols:
+            raise ValueError("At least one symbol must be provided.")
+
+        if len(symbols) > 100:
+            raise ValueError("Maximum 100 symbols allowed per request.")
+
+        symbols_as_str = ",".join(
+            [requests.utils.quote(sym.strip()) for sym in symbols]
+        )
+
+        url = (
+            "https://api.tradestation.com/v3/marketdata/symbols/"
+            f"{symbols_as_str}"
+        )
+        token = self.token_manager.get_token()
+        headers = {"Authorization": f"Bearer {token}"}
+
+        return self.make_request(url=url, headers=headers, params={})
