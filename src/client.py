@@ -1,12 +1,13 @@
 from src.endpoints.market_data import MarketDataAPI
 
 class TradeStationClient:
-    def __init__(
-        self,
-        *,
-        token_manager
-    ):
+    """
+    Central entry point for all TradeStation API modules.
+    Aggregates sub-clients such as MarketDataAPI, OrdersAPI, etc.
+    """
+
+    def __init__(self, *, token_manager):
         self.token_manager = token_manager
-        self.market_data = MarketDataAPI(
-            token_manager=token_manager
-        )
+        
+        # Sub-clients share the same TokenManager instance
+        self.market_data = MarketDataAPI(token_manager=token_manager)
