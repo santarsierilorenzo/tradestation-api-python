@@ -1,5 +1,6 @@
 from src.base_client import BaseAPIClient
-from typing import Dict
+from typing import Dict, Optional
+from datetime import datetime
 import requests
 
 
@@ -195,3 +196,93 @@ class Brokerage(BaseAPIClient):
         )
 
         return response
+
+    def get_historical_orders(
+        self,
+        *,
+        accounts: list[str],
+        since: str,
+        page_size: Optional[int] = 600,
+        next_token: Optional[str] = None,
+    ) -> Dict:
+        """
+        Retrieve historical (closed) orders for the given accounts.
+
+        This endpoint returns all historical orders except open ones,
+        sorted in descending order by close time. The request is valid for
+        all account types.
+
+        Parameters
+        ----------
+        accounts : list of str
+            One or more account IDs to query (maximum 100).
+        since : str
+            Date string in 'YYYY-MM-DD' format indicating the earliest
+            close time to include. Must be within the past 90 days.
+        page_size : int, optional, default=600
+            Maximum number of records to return per page.
+        next_token : str, optional
+            Continuation token for paginated results (if applicable).
+
+        Returns
+        -------
+        dict
+            JSON response containing historical orders. Each entry may include:
+              - `OrderID`: Unique identifier of the order.
+              - `Symbol`: Traded instrument.
+              - `Quantity`: Size of the trade.
+              - `ClosedDateTime`: When the order was closed.
+
+        Raises
+        ------
+        ValueError
+            If no accounts are provided, more than 100 are specified,
+            or 'since' is older than 90 days.
+        requests.exceptions.RequestException
+            If the HTTP request fails or the API returns an error.
+
+        Notes
+        -----
+        - Orders are returned in descending chronological order.
+        - The 'since' parameter cannot exceed 90 days before today.
+        - Use 'next_token' for pagination.
+        - Requires a valid access token.
+        """
+
+        if not accounts:
+            raise ValueError("At least one account must be provided.")
+
+        if len(accounts) > 100:
+            raise ValueError("Maximum 100 accounts allowed per request.")
+        
+        date_since = datetime.strptime(since, "%Y-%m-%d").date()
+        if (datetime.now().date() - date_since).days > 90:
+            raise ValueError("`since` must be within the past 90 days.")
+
+        accounts_as_str = ",".join(
+            [requests.utils.quote(acc.strip()) for acc in accounts]
+        )
+
+        url = (
+            "https://api.tradestation.com/v3/brokerage/accounts/"
+            f"{accounts_as_str}/historicalorders"
+        )
+
+        token = self.token_manager.get_token()
+        headers = {"Authorization": f"Bearer {token}"}
+
+        params = {
+            "since": since,
+            "pageSize": page_size,
+            "nextToken": next_token,
+        }
+        params = {k: v for k, v in params.items() if v is not None}
+
+        response = self.make_request(
+            url=url,
+            headers=headers,
+            params=params
+        )
+
+        return response
+
