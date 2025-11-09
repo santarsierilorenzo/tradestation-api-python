@@ -153,10 +153,10 @@ class BaseStreamClient:
         on_message
     ):
         """Refreshes token and reopens stream on 401 or disconnection."""
-        logging.warning(
+        self.logger.warning(
             "Stream disconnected — refreshing token and reconnecting."
         )
-        new_token = self.token_manager.get_token()
+        new_token = self.token_manager.refresh_token()
         headers["Authorization"] = f"Bearer {new_token}"
         self._run_stream(url, params, headers, on_message)
 
