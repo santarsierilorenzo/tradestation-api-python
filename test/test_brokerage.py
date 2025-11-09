@@ -360,3 +360,48 @@ def test_get_historical_orders_by_id_date_too_old(token_manager):
         api.get_historical_orders_by_id(
             accounts=["ACC1"], order_ids=["O1"], since=old_date
         )
+
+
+@patch.object(Brokerage, "make_request")
+def test_get_orders_success(mock_make, token_manager):
+    """
+    Ensure get_orders() constructs URL and params correctly.
+    """
+    mock_make.return_value = {"Orders": [{"OrderID": "O123"}]}
+
+    api = Brokerage(token_manager=token_manager)
+    result = api.get_orders(
+        accounts=["ACC1"],
+        page_size=100,
+        next_token="tok123"
+    )
+
+    assert isinstance(result, dict)
+    assert "Orders" in result
+    mock_make.assert_called_once()
+
+    call = mock_make.call_args.kwargs
+    assert "ACC1" in call["url"]
+    assert call["url"].endswith("/orders")
+    assert call["params"]["pageSize"] == 100
+    assert call["params"]["nextToken"] == "tok123"
+
+
+def test_get_orders_empty_accounts(token_manager):
+    """
+    Ensure ValueError raised when no accounts provided.
+    """
+    api = Brokerage(token_manager=token_manager)
+    with pytest.raises(ValueError, match="At least one account"):
+        api.get_orders(accounts=[])
+
+
+def test_get_orders_too_many_accounts(token_manager):
+    """
+    Ensure ValueError raised when >100 accounts provided.
+    """
+    api = Brokerage(token_manager=token_manager)
+    too_many = [f"ACC{i}" for i in range(101)]
+
+    with pytest.raises(ValueError, match="Maximum 100 accounts"):
+        api.get_orders(accounts=too_many)
