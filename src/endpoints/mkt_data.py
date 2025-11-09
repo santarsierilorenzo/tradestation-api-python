@@ -311,3 +311,23 @@ class MarketDataAPI(BaseAPIClient):
         headers = {"Authorization": f"Bearer {token}"}
 
         return self.make_request(url=url, headers=headers, params={})
+    
+    def get_crypto_symbol_names(self) -> Dict:
+        """
+        Fetch crypto symbol names for all available cryptocurrency pairs
+        (e.g., BTCUSD, ETHUSD, LTCUSD, BCHUSD).
+
+        Notes
+        -----
+        - These symbols provide market data only; they cannot be traded.
+        - Endpoint: /v3/marketdata/symbollists/cryptopairs/symbols
+        """
+        url = (
+            "https://api.tradestation.com/v3/marketdata/symbollists/"
+            "cryptopairs/symbolnames"
+        )
+        token = self.token_manager.get_token()
+        headers = {"Authorization": f"Bearer {token}"}
+
+        return self.make_request(url=url, headers=headers, params={})
+
