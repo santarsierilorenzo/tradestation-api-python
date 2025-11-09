@@ -1,5 +1,5 @@
 from src.endpoints.market_data import MarketDataAPI
-from src.endpoints.brokerage import Brokerage
+from src.endpoints.broker import Brokerage
 
 class TradeStationClient:
     """

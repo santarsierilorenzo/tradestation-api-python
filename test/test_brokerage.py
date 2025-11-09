@@ -1,4 +1,4 @@
-from src.endpoints.brokerage import Brokerage
+from src.endpoints.broker import Brokerage
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta
 import pytest
