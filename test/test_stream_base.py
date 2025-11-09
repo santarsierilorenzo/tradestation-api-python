@@ -248,3 +248,14 @@ def test_stream_orders_by_id_valid(mock_stream, token_manager):
     args = mock_stream.call_args.kwargs
     assert "ACC1" in args["url"]
     assert "ORD123" in args["url"]
+
+
+@patch.object(BrokerStream, "stream_loop")
+def test_stream_positions_valid(mock_stream, token_manager):
+    api = BrokerStream(token_manager=token_manager)
+    api.stream_positions(accounts=["ACC1"], changes=True)
+
+    mock_stream.assert_called_once()
+    args = mock_stream.call_args.kwargs
+    assert "ACC1" in args["url"]
+    assert args["params"]["changes"] == "true"
