@@ -1,6 +1,5 @@
-from typing import Optional, Dict
 from src.base_client import BaseStreamClient
-import logging
+from typing import Optional, Dict
 
 
 class MarketDataStream(BaseStreamClient):
