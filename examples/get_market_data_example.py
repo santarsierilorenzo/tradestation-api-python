@@ -13,12 +13,22 @@ if __name__ == "__main__":
         token_manager=token_manager
     )
 
-    data = ts_client.market_data.get_bars_between(
+    # Get bars between a range of dates
+    data1 = ts_client.market_data.get_bars_between(
         symbol="AAPL",
         first_date="2020-01-01",
         interval=1,
         unit="Minute",
         max_workers=15,
+    )
+
+    # Get bars back from a last date
+    data2 = ts_client.market_data.get_bars(
+        symbol="AAPL",
+        barsback=100,
+        last_date="2020-01-01",
+        interval=1,
+        unit="Minute",
     )
 
 
