@@ -1,5 +1,6 @@
 from src.endpoints.brokerage import Brokerage
 from unittest.mock import patch, MagicMock
+from datetime import datetime, timedelta
 import pytest
 
 
@@ -161,3 +162,108 @@ def test_get_balances_bod_too_many_accounts(token_manager):
     api = Brokerage(token_manager=token_manager)
     with pytest.raises(ValueError, match="Maximum 100 accounts"):
         api.get_balances_bod(accounts=["ACC"] * 101)
+
+
+@patch.object(Brokerage, "make_request")
+def test_get_historical_orders_success(mock_make, token_manager):
+    """
+    Ensure get_historical_orders() builds URL and params correctly
+    for valid inputs.
+    """
+    mock_make.return_value = {"Orders": [{"OrderID": "O123"}]}
+
+    api = Brokerage(token_manager=token_manager)
+    recent_date = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d")
+
+    result = api.get_historical_orders(
+        accounts=["ACC1"],
+        since=recent_date,
+        page_size=100,
+        next_token="abc"
+    )
+
+    assert isinstance(result, dict)
+    assert "Orders" in result
+    mock_make.assert_called_once()
+
+    call = mock_make.call_args.kwargs
+    assert "ACC1" in call["url"]
+    assert call["url"].endswith("/historicalorders")
+    assert call["params"]["since"] == recent_date
+    assert call["params"]["pageSize"] == 100
+    assert call["params"]["nextToken"] == "abc"
+
+
+@patch.object(Brokerage, "make_request")
+def test_get_historical_orders_valid_date_format(mock_make, token_manager):
+    """
+    Ensure get_historical_orders() accepts only valid 'YYYY-MM-DD' dates.
+    """
+    mock_make.return_value = {"Orders": []}
+    api = Brokerage(token_manager=token_manager)
+
+    # Use a recent valid date
+    recent_date = (datetime.now() - timedelta(days=10)).strftime("%Y-%m-%d")
+
+    api.get_historical_orders(
+        accounts=["ACC1"],
+        since=recent_date,
+    )
+
+    call = mock_make.call_args.kwargs
+    assert call["params"]["since"] == recent_date
+
+
+def test_get_historical_orders_invalid_date_format(token_manager):
+    """
+    Ensure invalid date formats raise ValueError (e.g., full ISO timestamps).
+    """
+    api = Brokerage(token_manager=token_manager)
+
+    # Invalid ISO with time component
+    with pytest.raises(ValueError):
+        api.get_historical_orders(
+            accounts=["ACC1"],
+            since="2024-11-09T00:00:00Z",
+        )
+
+    # Invalid date format with slashes
+    with pytest.raises(ValueError):
+        api.get_historical_orders(
+            accounts=["ACC1"],
+            since="2024/11/09",
+        )
+
+
+def test_get_historical_orders_date_too_old(token_manager):
+    """
+    Ensure ValueError is raised when 'since' exceeds the 90-day limit.
+    """
+    api = Brokerage(token_manager=token_manager)
+    old_date = (datetime.now() - timedelta(days=120)).strftime("%Y-%m-%d")
+
+    with pytest.raises(ValueError, match="must be within the past 90 days"):
+        api.get_historical_orders(accounts=["ACC1"], since=old_date)
+
+
+def test_get_historical_orders_empty_accounts(token_manager):
+    """
+    Ensure ValueError is raised when no accounts are provided.
+    """
+    api = Brokerage(token_manager=token_manager)
+    recent_date = datetime.now().strftime("%Y-%m-%d")
+
+    with pytest.raises(ValueError, match="At least one account"):
+        api.get_historical_orders(accounts=[], since=recent_date)
+
+
+def test_get_historical_orders_too_many_accounts(token_manager):
+    """
+    Ensure ValueError is raised when more than 100 accounts are provided.
+    """
+    api = Brokerage(token_manager=token_manager)
+    recent_date = datetime.now().strftime("%Y-%m-%d")
+
+    too_many = [f"A{i}" for i in range(101)]
+    with pytest.raises(ValueError, match="Maximum 100 accounts"):
+        api.get_historical_orders(accounts=too_many, since=recent_date)
