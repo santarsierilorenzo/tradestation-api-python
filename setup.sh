@@ -1,6 +1,3 @@
-git update-index --assume-unchanged .devcontainer/devcontainer.json.extensions_ssh_mount
-git update-index --assume-unchanged .devcontainer/devcontainer.json.extensions
-git update-index --assume-unchanged .devcontainer/devcontainer.json.ssh_mount
 git update-index --assume-unchanged .devcontainer/devcontainer.json
 git update-index --assume-unchanged .devcontainer/Dockerfile
 git update-index --assume-unchanged requirements.txt
