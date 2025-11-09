@@ -156,7 +156,7 @@ class BaseStreamClient:
         logging.warning(
             "Stream disconnected — refreshing token and reconnecting."
         )
-        new_token = self.token_manager.refresh_token()
+        new_token = self.token_manager.get_token()
         headers["Authorization"] = f"Bearer {new_token}"
         self._run_stream(url, params, headers, on_message)
 
@@ -170,23 +170,29 @@ class BaseStreamClient:
         """Handles one connection attempt and auto-reconnect logic."""
         try:
             with self._connect(url, params, headers) as resp:
+                # === Authentication / Entitlement failure ===
                 if resp.status_code == 401:
-                    return self._refresh_and_reconnect(
-                        url, params, headers, on_message
+                    self.logger.warning(
+                        "Unauthorized (401) — token invalid or entitlement missing. "
+                        "Stopping stream to prevent infinite reconnects."
                     )
-                elif not resp.ok:
+                    self.stop()
+                    return
+
+                # === Other non-OK responses ===
+                if not resp.ok:
                     self.logger.error(
                         f"Stream error {resp.status_code}: {resp.text}"
                     )
-   
+                    self.stop()
                     return
 
+                # === Successful connection ===
                 ctype = resp.headers.get("Content-Type")
                 self.logger.info(
                     f"Connected stream with content-type: {ctype}"
                 )
 
-                # Qui leggiamo le righe (eventi)
                 for line in resp.iter_lines():
                     if not self._running:
                         self.logger.info("Stream stopped by user.")
@@ -197,15 +203,15 @@ class BaseStreamClient:
                         data = json.loads(line)
                         on_message(data)
                     except json.JSONDecodeError:
-                        logging.warning("Invalid JSON chunk.")
+                        self.logger.warning("Invalid JSON chunk.")
                         continue
+
         except requests.exceptions.RequestException as e:
-            self.logger.error(
-                        f"Connection error: {e}"
-            )
-            
+            self.logger.error(f"Connection error: {e}")
             time.sleep(3)
+            self.logger.info("Attempting to reconnect...")
             self._refresh_and_reconnect(url, params, headers, on_message)
+
 
     def stream_loop(
         self,
