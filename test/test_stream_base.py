@@ -1,5 +1,5 @@
-from src.endpoints.mkt_data_stream import MarketDataStream
 from src.base_client import BaseAPIClient, BaseStreamClient
+from src.endpoints.mkt_data_stream import MarketDataStream
 from unittest.mock import MagicMock, patch
 import pytest
 
@@ -89,3 +89,48 @@ def test_default_message_handler_logs():
     assert "O:1" in call_arg
     assert "C:1.5" in call_arg
 
+
+@patch.object(MarketDataStream, "stream_loop")
+def test_stream_quotes_success(mock_stream, caplog):
+    """Ensure stream_quotes builds correct URL and headers."""
+    tm = MagicMock()
+    tm.get_token.return_value = "fake_token"
+
+    api = MarketDataStream(token_manager=tm)
+    api._default_message_handler = MagicMock()
+
+    api.stream_quotes(symbols=["AAPL", "MSFT"])
+
+    # Assert stream_loop was called correctly
+    mock_stream.assert_called_once()
+    call = mock_stream.call_args.kwargs
+
+    # Check URL and headers
+    assert "quotes/AAPL,MSFT" in call["url"]
+    assert call["headers"]["Authorization"] == "Bearer fake_token"
+    assert call["headers"]["Accept"].startswith("application/vnd.tradestation")
+
+    # No params for quotes
+    assert call["params"] == {}
+    # Default message handler used
+    assert call["on_message"] == api._default_message_handler
+
+
+def test_stream_quotes_raises_no_symbols():
+    """Ensure ValueError if symbols list is empty."""
+    tm = MagicMock()
+    api = MarketDataStream(token_manager=tm)
+
+    with pytest.raises(ValueError, match="At least one symbol"):
+        api.stream_quotes(symbols=[])
+
+
+def test_stream_quotes_raises_too_many_symbols():
+    """Ensure ValueError if more than 100 symbols are passed."""
+    tm = MagicMock()
+    api = MarketDataStream(token_manager=tm)
+
+    symbols = [f"SYM{i}" for i in range(101)]
+
+    with pytest.raises(ValueError, match="Maximum 100 symbols"):
+        api.stream_quotes(symbols=symbols)
