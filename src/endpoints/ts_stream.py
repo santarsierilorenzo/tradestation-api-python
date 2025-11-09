@@ -1,4 +1,4 @@
-from src.base_client import BaseStreamClient
+from ..base_client import BaseStreamClient
 from typing import Optional, Dict
 
 

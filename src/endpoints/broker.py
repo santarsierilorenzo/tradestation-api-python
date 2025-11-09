@@ -1,4 +1,4 @@
-from src.base_client import BaseAPIClient
+from ..base_client import BaseAPIClient
 from typing import Dict, Optional
 from datetime import datetime
 import requests

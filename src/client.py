@@ -1,6 +1,9 @@
-from src.endpoints.ts_stream import MarketDataStream, BrokerStream
-from src.endpoints.mkt_data import MarketDataAPI
-from src.endpoints.broker import Brokerage
+from .endpoints import (
+    MarketDataStream,
+    BrokerStream,
+    MarketDataAPI,
+    Brokerage
+)
 
 class TradeStationClient:
     """

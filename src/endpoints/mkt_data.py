@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from src.base_client import BaseAPIClient
+from ..base_client import BaseAPIClient
 from typing import Optional, Dict, Any
 from rich.progress import Progress
 from datetime import date
