@@ -468,3 +468,46 @@ def test_get_orders_by_id_too_many_order_ids(token_manager):
 
     with pytest.raises(ValueError, match="Maximum 100 order IDs"):
         api.get_orders_by_id(accounts=["ACC1"], order_ids=too_many)
+
+
+@patch.object(Brokerage, "make_request")
+def test_get_positions_success(mock_make, token_manager):
+    """
+    Ensure get_positions() constructs URL and params correctly.
+    """
+    mock_make.return_value = {"Positions": [{"Symbol": "AAPL"}]}
+
+    api = Brokerage(token_manager=token_manager)
+    result = api.get_positions(
+        accounts=["ACC1"],
+        symbol=["AAPL"]
+    )
+
+    assert isinstance(result, dict)
+    assert "Positions" in result
+    mock_make.assert_called_once()
+
+    call = mock_make.call_args.kwargs
+    assert "ACC1" in call["url"]
+    assert call["url"].endswith("/positions")
+    assert call["params"]["symbol"] == ["AAPL"]
+
+
+def test_get_positions_empty_accounts(token_manager):
+    """
+    Ensure ValueError raised when no accounts are provided.
+    """
+    api = Brokerage(token_manager=token_manager)
+    with pytest.raises(ValueError, match="At least one account"):
+        api.get_positions(accounts=[])
+
+
+def test_get_positions_too_many_accounts(token_manager):
+    """
+    Ensure ValueError raised when more than 100 accounts are provided.
+    """
+    api = Brokerage(token_manager=token_manager)
+    too_many = [f"A{i}" for i in range(101)]
+
+    with pytest.raises(ValueError, match="Maximum 100 accounts"):
+        api.get_positions(accounts=too_many)
