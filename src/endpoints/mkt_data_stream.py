@@ -93,3 +93,54 @@ class MarketDataStream(BaseStreamClient):
             self.logger.info(f"{ts} | O:{o} H:{h} L:{l} C:{c}")
         else:
             self.logger.debug(f"Stream message: {msg}")
+
+    def stream_quotes(
+        self,
+        *,
+        symbols: list[str],
+        on_message=None,
+    ) -> None:
+        """
+        Stream real-time quote updates for one or more symbols.
+
+        Parameters
+        ----------
+        symbols : list of str
+            One or more market symbols (e.g., ["AAPL", "MSFT"]).
+        on_message : callable, optional
+            Callback invoked with each parsed JSON message.
+
+        Notes
+        -----
+        - Supports up to 100 symbols per request.
+        - The stream remains open until `stop()` is called.
+        - Each message typically contains bid/ask, last price,
+        volume, and trade status fields.
+        """
+        if not symbols:
+            raise ValueError("At least one symbol must be provided.")
+
+        if len(symbols) > 100:
+            raise ValueError("Maximum 100 symbols allowed per request.")
+
+        # Join the symbols in a comma-separated list
+        symbols_as_str = ",".join(sym.strip().upper() for sym in symbols)
+
+        url = (
+            "https://api.tradestation.com/v3/marketdata/stream/"
+            f"quotes/{symbols_as_str}"
+        )
+
+        headers = {
+            "Authorization": f"Bearer {self.token_manager.get_token()}",
+            "Accept": "application/vnd.tradestation.streams.v2+json",
+        }
+
+        self.logger.info(f"Starting quote stream for {symbols_as_str}")
+
+        self.stream_loop(
+            url=url,
+            params={},  # no query parameters for quotes
+            headers=headers,
+            on_message=on_message or self._default_message_handler,
+        )
