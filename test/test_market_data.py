@@ -83,3 +83,143 @@ def test_make_request_raises_non_401(mock_get, token_manager):
 
     with pytest.raises(requests.exceptions.HTTPError):
         api.make_request("url", {"Authorization": "Bearer X"}, {"interval": 1})
+
+
+def test_get_bars_between_invalid_date_order(token_manager):
+    """
+    Ensure get_bars_between() raises if first_date > last_date.
+    """
+    api = MarketDataAPI(token_manager=token_manager)
+
+    with pytest.raises(Exception, match="first_data can't be greater"):
+        api.get_bars_between(
+            symbol="MSFT",
+            first_date="2024-12-01",
+            last_date="2024-01-01",
+            unit="Daily",
+        )
+
+
+@pytest.fixture
+def token_manager():
+    """
+    Provide a mocked TokenManager with stubbed token methods.
+    """
+    tm = MagicMock()
+    tm.get_token.return_value = "valid_token"
+    tm.refresh_token.return_value = "new_token"
+    return tm
+
+
+@patch("src.endpoints.market_data.requests.get")
+def test_make_request_success(mock_get, token_manager):
+    """
+    Verify make_request() handles a 200 OK and returns JSON data.
+    """
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {"Bars": [{"Time": "2024-01-01"}]}
+    mock_get.return_value = mock_resp
+
+    api = MarketDataAPI(token_manager=token_manager)
+    result = api.make_request("url", {"Authorization": "Bearer X"},
+                              {"interval": 1})
+
+    assert "Bars" in result
+    mock_get.assert_called_once()
+
+
+@patch("src.endpoints.market_data.requests.get")
+def test_make_request_refresh_token(mock_get, token_manager):
+    """
+    Ensure make_request() refreshes token on 401 and retries once.
+    """
+    first = MagicMock()
+    first.status_code = 401
+    first.raise_for_status.side_effect = requests.exceptions.HTTPError(
+        "Unauthorized"
+    )
+
+    second = MagicMock()
+    second.status_code = 200
+    second.raise_for_status.return_value = None
+    second.json.return_value = {"Bars": [{"Time": "2024-01-01"}]}
+    mock_get.side_effect = [first, second]
+
+    api = MarketDataAPI(token_manager=token_manager)
+    res = api.make_request("url", {"Authorization": "Bearer X"},
+                           {"interval": 1})
+
+    assert res["Bars"][0]["Time"] == "2024-01-01"
+    token_manager.refresh_token.assert_called_once()
+
+
+@patch("src.endpoints.market_data.requests.get")
+def test_make_request_raises_non_401(mock_get, token_manager):
+    """
+    Check make_request() raises errors other than 401.
+    """
+    resp = MagicMock()
+    resp.status_code = 500
+    resp.raise_for_status.side_effect = requests.exceptions.HTTPError(
+        "Internal Server Error"
+    )
+    mock_get.return_value = resp
+
+    api = MarketDataAPI(token_manager=token_manager)
+
+    with pytest.raises(requests.exceptions.HTTPError):
+        api.make_request("url", {"Authorization": "Bearer X"},
+                         {"interval": 1})
+
+
+@patch.object(MarketDataAPI, "make_request")
+def test_get_bars_success(mock_make, token_manager):
+    """
+    Verify get_bars() builds params correctly and returns API data.
+    """
+    mock_make.return_value = {"Bars": [{"Time": "2024-01-01"}]}
+    api = MarketDataAPI(token_manager=token_manager)
+
+    result = api.get_bars(symbol="MSFT", barsback=50, unit="Daily")
+    assert "Bars" in result
+    mock_make.assert_called_once()
+    call_args = mock_make.call_args[1]["params"]
+    assert call_args["unit"] == "Daily"
+    assert call_args["barsback"] == 50
+
+
+def test_get_bars_invalid_barsback(token_manager):
+    """
+    Ensure get_bars() raises if barsback exceeds 57,600.
+    """
+    api = MarketDataAPI(token_manager=token_manager)
+    with pytest.raises(ValueError):
+        api.get_bars(symbol="MSFT", barsback=100000)
+
+
+@patch.object(MarketDataAPI, "make_request")
+def test_get_bars_between_single_request(mock_make, token_manager):
+    """
+    Validate get_bars_between() makes one request for small ranges.
+    """
+    mock_make.return_value = {"Bars": [{"Time": "2024-01-01"}]}
+    api = MarketDataAPI(token_manager=token_manager)
+    res = api.get_bars_between(symbol="MSFT",
+                               first_date="2024-01-01",
+                               last_date="2024-01-05",
+                               unit="Daily")
+    assert "Bars" in res
+    mock_make.assert_called_once()
+
+
+def test_get_bars_between_invalid_unit(token_manager):
+    """
+    Ensure get_bars_between() raises ValueError for invalid units.
+    """
+    api = MarketDataAPI(token_manager=token_manager)
+    with pytest.raises(ValueError):
+        api.get_bars_between(symbol="MSFT",
+                             first_date="2024-01-01",
+                             unit="Hourly")
+
