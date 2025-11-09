@@ -287,12 +287,12 @@ class Brokerage(BaseAPIClient):
         return response
 
     def get_historical_orders_by_id(
-    self,
-    *,
-    accounts: list[str],
-    order_ids: list[str],
-    since: str,
-) -> Dict:
+        self,
+        *,
+        accounts: list[str],
+        order_ids: list[str],
+        since: str,
+    ) -> Dict:
         """
         Retrieve specific historical orders by ID for given accounts.
 
@@ -374,3 +374,79 @@ class Brokerage(BaseAPIClient):
 
         return response
     
+    def get_orders(
+        self,
+        *,
+        accounts: list[str],
+        page_size: Optional[int] = 600,
+        next_token: Optional[str] = None,
+    ) -> Dict:
+        """
+        Retrieve today's and open orders for the given accounts.
+
+        This endpoint returns all open orders and today's executed orders,
+        sorted in descending order by time placed (open) or time executed
+        (closed). The request is valid for all account types.
+
+        Parameters
+        ----------
+        accounts : list of str
+            One or more account IDs to query (maximum 100).
+        page_size : int, optional, default=600
+            Maximum number of records returned per page.
+        next_token : str, optional
+            Continuation token for paginated results.
+
+        Returns
+        -------
+        dict
+            JSON response containing orders. Each entry typically includes:
+            - `OrderID`: Unique identifier
+            - `Symbol`: Traded instrument
+            - `Status`: Open, Filled, or Canceled
+            - `TimePlaced` / `TimeExecuted`: Timestamps
+
+        Raises
+        ------
+        ValueError
+            If `accounts` is empty or exceeds 100 items.
+        requests.exceptions.RequestException
+            If the HTTP request fails or returns an error response.
+
+        Notes
+        -----
+        - Open and today's orders are returned.
+        - Use `next_token` for pagination.
+        - Requires a valid access token.
+        """
+        if not accounts:
+            raise ValueError("At least one account must be provided.")
+
+        if len(accounts) > 100:
+            raise ValueError("Maximum 100 accounts allowed per request.")
+
+        accounts_as_str = ",".join(
+            [requests.utils.quote(acc.strip()) for acc in accounts]
+        )
+
+        url = (
+            "https://api.tradestation.com/v3/brokerage/accounts/"
+            f"{accounts_as_str}/orders"
+        )
+
+        token = self.token_manager.get_token()
+        headers = {"Authorization": f"Bearer {token}"}
+
+        params = {
+            "pageSize": page_size,
+            "nextToken": next_token,
+        }
+        params = {k: v for k, v in params.items() if v is not None}
+
+        response = self.make_request(
+            url=url,
+            headers=headers,
+            params=params
+        )
+
+        return response
