@@ -173,7 +173,7 @@ class BaseStreamClient:
                 # === Authentication / Entitlement failure ===
                 if resp.status_code == 401:
                     self.logger.warning(
-                        "Unauthorized (401) — token invalid or entitlement missing. "
+                        "Unauthorized (401) — entitlement missing. "
                         "Stopping stream to prevent infinite reconnects."
                     )
                     self.stop()
@@ -211,7 +211,6 @@ class BaseStreamClient:
             time.sleep(3)
             self.logger.info("Attempting to reconnect...")
             self._refresh_and_reconnect(url, params, headers, on_message)
-
 
     def stream_loop(
         self,

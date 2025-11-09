@@ -204,3 +204,61 @@ class MarketDataStream(BaseStreamClient):
             on_message=on_message or self._default_message_handler,
         )
 
+    def stream_market_depth_aggregates(
+        self,
+        *,
+        symbol: str,
+        max_levels: Optional[int] = 20,
+        on_message=None,
+    ) -> None:
+        """
+        Stream aggregate market depth data (Level II aggregates) for a symbol.
+
+        This stream provides aggregated bid/ask quotes for equities, futures,
+        and stock options. Each message represents a consolidated price level
+        and side, with data aggregated from multiple participants.
+
+        Parameters
+        ----------
+        symbol : str
+            Single market symbol (e.g., "AAPL", "ESZ4").
+        max_levels : int, optional, default=20
+            Maximum number of aggregated bid/ask levels to return.
+        on_message : callable, optional
+            Callback invoked with each parsed JSON message.
+            Example: `lambda msg: print(msg["Bid"][0])`
+
+        Notes
+        -----
+        - Requires market depth (Level II) data entitlement.
+        - Aggregates are recalculated in real time as orders change.
+        - Stream remains open until `stop()` is called.
+        """
+
+        if not symbol:
+            raise ValueError("A valid symbol must be provided.")
+
+        url = (
+            "https://api.tradestation.com/v3/marketdata/stream/"
+            f"marketdepth/aggregates/{symbol}"
+        )
+
+        headers = {
+            "Authorization": f"Bearer {self.token_manager.get_token()}",
+            "Accept": "application/vnd.tradestation.streams.v2+json",
+        }
+
+        params: Dict[str, str | int] = {"maxlevels": max_levels}
+        params = {k: v for k, v in params.items() if v is not None}
+
+        self.logger.info(
+            f"Starting market depth aggregates stream for {symbol} "
+            f"(max_levels={max_levels})"
+        )
+
+        self.stream_loop(
+            url=url,
+            params=params,
+            headers=headers,
+            on_message=on_message or self._default_message_handler,
+        )
