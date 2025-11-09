@@ -1,4 +1,4 @@
-from src.endpoints.ts_stream import MarketDataStream
+from src.endpoints.ts_stream import MarketDataStream, BrokerStream
 from src.endpoints.mkt_data import MarketDataAPI
 from src.endpoints.broker import Brokerage
 
@@ -14,6 +14,7 @@ class TradeStationClient:
         # Sub-clients share the same TokenManager instance
         self.market_data = MarketDataAPI(token_manager=token_manager)
         self.market_data_stream = MarketDataStream(token_manager=token_manager)
-        self.brokerage = Brokerage(token_manager=token_manager)
+        self.broker = Brokerage(token_manager=token_manager)
+        self.broker_stream = BrokerStream(token_manager=token_manager)
 
 

@@ -170,35 +170,37 @@ class BaseStreamClient:
         """Handles one connection attempt and auto-reconnect logic."""
         try:
             with self._connect(url, params, headers) as resp:
-                # === Authentication / Entitlement failure ===
                 if resp.status_code == 401:
                     self.logger.warning(
-                        "Unauthorized (401) — entitlement missing. "
-                        "Stopping stream to prevent infinite reconnects."
+                        "Unauthorized (401) — token likely invalid."
                     )
-                    self.stop()
-                    return
+                    return self._refresh_and_reconnect(
+                        url,
+                        params,
+                        headers,
+                        on_message
+                    )
 
-                # === Other non-OK responses ===
-                if not resp.ok:
+                elif not resp.ok:
                     self.logger.error(
                         f"Stream error {resp.status_code}: {resp.text}"
                     )
                     self.stop()
                     return
 
-                # === Successful connection ===
                 ctype = resp.headers.get("Content-Type")
                 self.logger.info(
                     f"Connected stream with content-type: {ctype}"
                 )
 
+                has_data = False
                 for line in resp.iter_lines():
                     if not self._running:
                         self.logger.info("Stream stopped by user.")
                         break
                     if not line:
                         continue
+                    has_data = True
                     try:
                         data = json.loads(line)
                         on_message(data)
@@ -206,10 +208,15 @@ class BaseStreamClient:
                         self.logger.warning("Invalid JSON chunk.")
                         continue
 
+                if not has_data:
+                    self.logger.info(
+                        "No stream data received — waiting before reconnect."
+                    )
+                    time.sleep(10)
+
         except requests.exceptions.RequestException as e:
             self.logger.error(f"Connection error: {e}")
             time.sleep(3)
-            self.logger.info("Attempting to reconnect...")
             self._refresh_and_reconnect(url, params, headers, on_message)
 
     def stream_loop(
@@ -225,7 +232,6 @@ class BaseStreamClient:
         """
         self._running = True
 
-        # Manteniamo l’Authorization, ma rispettiamo anche altri header (es. Accept)
         if "Authorization" not in headers:
             token = self.token_manager.get_token()
             headers["Authorization"] = f"Bearer {token}"
@@ -233,7 +239,20 @@ class BaseStreamClient:
         self.logger.info(f"Starting stream: {url}")
 
         while self._running:
-            self._run_stream(url, params, headers, on_message)
+            # Main streaming loop:
+            # - Keeps the connection alive until self.stop() is called.
+            # - Automatically restarts the stream if the server closes it.
+            # - If no data is received (e.g. market closed), a small delay
+            #   (≈10s) inside _run_stream() prevents aggressive reconnects.
+            # - If data flows normally, the loop continues uninterrupted.
+            self._run_stream(
+                url,
+                params,
+                headers,
+                on_message
+            )
+            if self._running:
+                time.sleep(3)
 
     def stop(self):
         """Stops the active stream loop."""

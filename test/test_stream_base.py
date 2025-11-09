@@ -206,3 +206,24 @@ def test_stream_market_depth_quotes_invalid_symbol():
         assert "valid symbol" in str(e)
     else:
         raise AssertionError("Expected ValueError for missing symbol")
+
+
+@patch("time.sleep")
+def test_run_stream_sleeps_when_no_data(mock_sleep):
+    tm = MagicMock()
+    client = BaseStreamClient(token_manager=tm)
+
+    fake_response = MagicMock()
+    fake_response.__enter__.return_value = fake_response
+    fake_response.__exit__.return_value = None
+    fake_response.status_code = 200
+    fake_response.ok = True
+    fake_response.headers = {"Content-Type": "application/json"}
+    fake_response.iter_lines.return_value = []
+
+    client._connect = MagicMock(return_value=fake_response)
+    client._refresh_and_reconnect = MagicMock()
+
+    client._run_stream("url", {}, {}, MagicMock())
+
+    mock_sleep.assert_called_once()
