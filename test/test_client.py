@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock, patch
+from src.base_client import BaseAPIClient
 from src.client import TradeStationClient
 import pytest
 
@@ -19,3 +20,21 @@ def test_client_initializes_market_data(mock_market_data):
 
     # The market_data attribute should be the mocked instance
     assert client.market_data == mock_market_data.return_value
+
+
+@patch("src.base_client.requests.get")
+def test_make_request_refresh_token(mock_get):
+    tm = MagicMock()
+    tm.refresh_token.return_value = "new_token"
+
+    first = MagicMock(status_code=401)
+    second = MagicMock(status_code=200)
+    second.json.return_value = {"ok": True}
+    mock_get.side_effect = [first, second]
+
+    api = BaseAPIClient(token_manager=tm)
+    res = api.make_request("url", {"Authorization": "Bearer old"}, {})
+
+    assert res == {"ok": True}
+    tm.refresh_token.assert_called_once()
+    mock_get.assert_called()
