@@ -1,4 +1,4 @@
-# 🚀 tradestation-api-python
+# tradestation-api-python
 
 <p align="center">
   <a href="https://github.com/santarsierilorenzo/tradestation-api-python/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/santarsierilorenzo/tradestation-api-python/ci.yml?style=flat-square" alt="CI/CD Pipeline"></a>
