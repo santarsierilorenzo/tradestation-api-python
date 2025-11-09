@@ -123,7 +123,6 @@ class MarketDataStream(BaseStreamClient):
         if len(symbols) > 100:
             raise ValueError("Maximum 100 symbols allowed per request.")
 
-        # Join the symbols in a comma-separated list
         symbols_as_str = ",".join(sym.strip().upper() for sym in symbols)
 
         url = (
@@ -140,7 +139,7 @@ class MarketDataStream(BaseStreamClient):
 
         self.stream_loop(
             url=url,
-            params={},  # no query parameters for quotes
+            params={},
             headers=headers,
             on_message=on_message or self._default_message_handler,
         )
@@ -259,6 +258,46 @@ class MarketDataStream(BaseStreamClient):
         self.stream_loop(
             url=url,
             params=params,
+            headers=headers,
+            on_message=on_message or self._default_message_handler,
+        )
+
+
+class BrokerStream(BaseStreamClient):
+    def __init__(self, *, token_manager):
+        super().__init__(token_manager=token_manager)
+
+    def stream_orders(
+        self,
+        *,
+        accounts: list[str],
+        on_message=None,
+    ) -> None:
+        """
+        """
+        if not accounts:
+            raise ValueError("At least one account must be provided.")
+
+        if len(accounts) > 100:
+            raise ValueError("Maximum 100 accounts allowed per request.")
+
+        accounts_as_str = ",".join(acc.strip().upper() for acc in accounts)
+
+        url = (
+            "https://api.tradestation.com/v3/brokerage/accounts/"
+            f"{accounts_as_str}/orders"
+        )
+
+        headers = {
+            "Authorization": f"Bearer {self.token_manager.get_token()}",
+            "Accept": "application/vnd.tradestation.streams.v2+json",
+        }
+
+        self.logger.info(f"Starting orders stream for {accounts_as_str}")
+
+        self.stream_loop(
+            url=url,
+            params={},
             headers=headers,
             on_message=on_message or self._default_message_handler,
         )

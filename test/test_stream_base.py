@@ -1,5 +1,5 @@
 from src.base_client import BaseAPIClient, BaseStreamClient
-from src.endpoints.mkt_data_stream import MarketDataStream
+from src.endpoints.ts_stream import MarketDataStream
 from unittest.mock import MagicMock, patch
 import pytest
 
