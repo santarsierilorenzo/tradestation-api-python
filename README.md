@@ -1,4 +1,4 @@
-# tradestation-api-python
+# 🚀 tradestation-api-python
 
 <p align="center">
   <a href="https://github.com/santarsierilorenzo/tradestation-api-python/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/santarsierilorenzo/tradestation-api-python/ci.yml?style=flat-square" alt="CI/CD Pipeline"></a>
@@ -14,13 +14,7 @@
   <img src="https://img.shields.io/badge/PyTest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white" alt="PyTest">
   <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
   <img src="https://img.shields.io/badge/ThreadPoolExecutor-FF9F00?style=for-the-badge&logo=python&logoColor=white" alt="ThreadPoolExecutor">
-  <img src="https://img.shields.io/badge/Lock%20(Thread%20Safe)-C7253E?style=for-the-badge&logo=python&logoColor=white" alt="Thread Safety">
-  <br>
-  <img src="https://img.shields.io/badge/TradeStation%20API-002244?style=for-the-badge&logo=chartdotjs&logoColor=white" alt="TradeStation API">
-  <img src="https://img.shields.io/badge/Streaming-1E90FF?style=for-the-badge&logo=websocket&logoColor=white" alt="Streaming">
-  <img src="https://img.shields.io/badge/REST%20API-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="REST API">
-  <img src="https://img.shields.io/badge/Multi--Threaded-FF6F00?style=for-the-badge&logo=python&logoColor=white" alt="Multi-threaded">
-  <img src="https://img.shields.io/badge/DotEnv-4E9A06?style=for-the-badge&logo=dotenv&logoColor=white" alt="DotEnv">
+  <img src="https://img.shields.io/badge/Thread%20Safe-C7253E?style=for-the-badge&logo=python&logoColor=white" alt="Thread Safety">
 </p>
 
 <p align="center">
@@ -28,196 +22,148 @@
   <i>Developed with ❤️ by Lorenzo Santarsieri · Built for TradeStation REST & Stream APIs</i>
 </p>
 
-> **tradestation-api-python** provides a complete Python SDK to simplify 
-> interactions with the **TradeStation REST and Streaming APIs**.  
-> It can be used both as a backend library in your trading systems or as a > base for custom automation projects.
 
+&nbsp;
 
-## ⚠️ Read Before Continuing
+## ⚠️ Disclaimer & Security
+**tradestation-api-python** is an **unofficial SDK** for interacting with TradeStation REST and Streaming APIs.  
+It’s designed for research, prototyping, and automated trading integrations.  
+Not affiliated with or endorsed by TradeStation Technologies, Inc.
 
-**Disclaimer:**  
-This is an **unofficial** package. Before using it, please make sure you fully understand the TradeStation API and its capabilities.  
-This tool is provided *as-is* and is not affiliated with or endorsed by TradeStation Technologies, Inc.
+> ⚡ **By default**, the SDK runs in the **SIM (sandbox)** environment.  
+> To connect to LIVE trading, initialize `TokenManager(use_sim=False)`.
 
+&nbsp;
 
-## 🔐 Security Notice
-Before using this package in production, **always** test your setup in a **simulated environment**.  
-TradeStation APIs allow you to **place and modify real orders**, which can have financial consequences.  
-Make sure you understand how this SDK and the underlying API work before executing any trades.
+## 🧩 Overview
+This SDK simplifies access to TradeStation endpoints, handling:
+- OAuth2 token management (with automatic refresh & thread safety)
+- REST endpoints for brokerage & market data
+- Streaming (real-time) data connections
+- Multi-threaded data fetching for large historical datasets
 
-> 🧠 By default, the SDK runs in **SIM mode** (sandbox environment).  
-> You can switch to **LIVE** mode by passing `use_sim=False` to the `TokenManager`.
+&nbsp;
 
+## 🔧 Core Modules
 
-## 🧩 Core Features
-This SDK provides a robust and modular architecture built around:
+| Module | Description |
+|--------|--------------|
+| `auth.py` | Manages OAuth2 tokens, refresh logic, and race-condition prevention |
+| `base_client.py` | Low-level HTTP client with retry and error handling |
+| `client.py` | Unified entry point: exposes all TradeStation API services |
+| `endpoints/broker.py` | Account, balance, orders & positions |
+| `endpoints/mkt_data.py` | Historical & live market data |
+| `endpoints/ts_stream.py` | Real-time streaming (bars, quotes, orders, etc.) |
 
-### 🔑 Token Management (`auth.py`)
-- Manages OAuth2 tokens (load, save, refresh).  
-- Handles **race conditions** via a global thread lock.  
-- Ensures safe concurrent token usage across threads.
+<br>
 
-### 💼 TradeStationClient (`client.py`)
-Central entry point — automatically initializes and exposes:
-1. `MarketDataAPI` for historical and live market data.
-2. `MarketDataStream` for real-time market data streams.
-3. `Brokerage` for managing accounts, balances, orders, and positions.
-4. `BrokerStream` for real-time brokerage updates.
+## ⚙️ Concurrency and Streaming
 
-> 💡 The `TradeStationClient` ties together all services under a single, reusable interface.
+### 🧵 Thread Safety
+`TokenManager` ensures only one thread refreshes tokens at a time using a global lock (`threading.Lock`).
 
-### ⚙️ Base Classes
-- `BaseAPIClient`: common HTTP request logic.  
-- `BaseStreamClient`: handles WebSocket streaming, reconnects, and callbacks.
+### ⚡ Parallel Data Fetch
+`get_bars_between()` automatically splits large historical queries into smaller API chunks and fetches them concurrently using `ThreadPoolExecutor`.
 
-### 📡 Available Endpoints
-
-#### `broker.py`
-Manage brokerage operations:
 ```python
-get_accounts()
-get_balances()
-get_balances_bod()
-get_historical_orders()
-get_historical_orders_by_id()
-get_orders()
-get_orders_by_id()
-get_positions()
-```
+from src.client import TradeStationClient
+from src.auth import TokenManager
 
-#### `mkt_data.py`
-Handle historical and real-time market data:
-```python
-get_bars_between()
-get_bars()
-get_symbol_details()
-get_crypto_symbol_names()
-get_quote_snapshots()
-```
+token_manager = TokenManager(use_sim=True)
+ts = TradeStationClient(token_manager=token_manager)
 
-#### `ts_stream.py`
-Stream real-time market and brokerage events:
-```python
-stream_bars()
-stream_quotes()
-stream_market_depth_quotes()
-stream_market_depth_aggregates()
-stream_orders()
-stream_orders_by_id()
-stream_positions()
-```
-
-## ⚙️ Concurrency and Thread Safety
-
-### 🧵 Token Management & Race Conditions
-`TokenManager` uses a **class-level lock** (`threading.Lock`) ensuring that only one thread refreshes the token at a time.  
-All other threads wait and reuse the refreshed token — avoiding race conditions and invalid credentials.
-
-### ⚡ Multi-Threaded Historical Data Retrieval
-`MarketDataAPI.get_bars_between()` automatically:
-- Splits large date ranges into smaller API-compliant chunks.  
-- Fetches data concurrently with `ThreadPoolExecutor`.  
-- Merges and sorts all bars chronologically.
-
-Example:
-```python
-from src.marketdata import get_bars_between
-
-data = get_bars_between(
-    token=token,
-    symbol="MSFT",
-    first_date="2023-01-01",
-    last_date="2023-06-01",
+data = ts.market_data.get_bars_between(
+    symbol="AAPL",
+    first_date="2025-01-01",
+    last_date="2025-02-01",
     unit="Minute",
     interval=5,
     max_workers=10
 )
 ```
 
-✅ Benefits:
-- Parallel network I/O for faster historical fetches.  
-- Safe token reuse between threads.  
-- Automatic chunking for TradeStation’s 57,600-bar limit.
+✅ Automatically merges partial results and sorts chronologically.
 
-## 📁 Project Structure
+<br>
 
-```bash
-tradestation-api-python/
-│
-├── src/
-│   ├── auth.py              # Token lifecycle manager
-│   ├── base_client.py       # Base REST + stream client logic
-│   ├── client.py            # Central TradeStationClient interface
-│   ├── endpoints/
-│   │   ├── broker.py        # Brokerage REST endpoints
-│   │   ├── mkt_data.py      # Market Data REST endpoints
-│   │   └── ts_stream.py     # Real-time streaming endpoints
-│   └── __init__.py
-│
-├── test/                    # Unit test suite
-│   ├── test_auth.py
-│   ├── test_broker.py
-│   ├── test_mkt_data.py
-│   └── test_stream_base.py
-│
-├── examples/                # Example scripts
-│   ├── get_market_data_example.py
-│   └── stream_example.py
-│
-└── .env                     # Environment file for credentials
-```
-
-## 🧪 Testing and Coverage
-
-Comprehensive `pytest` suite covers:
-- REST endpoints (Brokerage & MarketData)
-- HTTP error propagation and token refresh
-- Thread-safety in token handling
-- Streaming event handling and reconnection logic
-
-Run the tests:
-```bash
-pytest -v
-```
-
-## 💡 Example Usage
+## 🧠 Streaming
+Example of subscribing to real-time market bars:
 
 ```python
 from src.client import TradeStationClient
 from src.auth import TokenManager
-from dotenv import load_dotenv
 
-load_dotenv()
 token_manager = TokenManager(use_sim=True)
+ts = TradeStationClient(token_manager=token_manager)
 
-ts_client = TradeStationClient(token_manager=token_manager)
-
-data = ts_client.market_data.get_bars_between(
+ts.market_data_stream.stream_bars(
     symbol="AAPL",
-    first_date="2025-01-01",
     interval=1,
     unit="Minute",
-    max_workers=15,
+    on_message=lambda msg: print(msg)
 )
 ```
 
-## 🧰 Development Setup (Docker + Dev Containers)
+Streaming endpoints auto-reconnect and use a built-in keep-alive mechanism.
 
-### Requirements
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [VS Code](https://code.visualstudio.com/)
-- [Dev Containers Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+<br>
 
-### Setup
+## 🧪 Testing
+
+Run the test suite to validate functionality:
+
 ```bash
-git clone https://github.com/santarsierilorenzo/tradestation-api-python
-code tradestation-api-python
+pytest -v
 ```
 
-Then open **Command Palette →**  
-`Dev Containers: Rebuild Without Cache and Reopen in Container`
+Covers:
+- REST requests & token refresh
+- Concurrency / lock behavior
+- Streaming message parsing & reconnection
 
-✅ This builds a reproducible containerized environment and runs `setup.sh`, marking untracked files (like `.devcontainer/`) as unchanged for a clean workspace.
+<br>
+
+## 🧰 Development Setup
+
+The SDK includes full Docker + DevContainer support for a reproducible setup.
+
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Visual Studio Code](https://code.visualstudio.com/)
+- [Dev Containers Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+
+### 🧑‍💻 Setup Steps
+
+**1️⃣ Clone the repository**
+```bash
+git clone https://github.com/santarsierilorenzo/tradestation-api-python
+cd tradestation-api-python
+```
+
+**2️⃣ Open in VS Code and rebuild**
+```bash
+Ctrl + Shift + P  →  Dev Containers: Rebuild Without Cache and Reopen in Container
+```
+
+**3️⃣ Configure environment**
+Create a `.env` file at the root with your TradeStation credentials:
+
+```bash
+TS_CLIENT_ID=your_client_id
+TS_CLIENT_SECRET=your_client_secret
+TS_REFRESH_TOKEN=your_refresh_token
+```
+
+**4️⃣ Run inside the container**
+Open an integrated terminal and test:
+
+```bash
+python -m examples.get_market_data_example
+```
+
+> 🧩 This setup ensures a clean, isolated environment without polluting your host system.
+
+<br>
 
 ## 🪪 License
-MIT © 2025 | Developed with ❤️ by Lorenzo Santarsieri
+MIT © 2025 — Developed with ❤️ by Lorenzo Santarsieri
