@@ -144,3 +144,63 @@ class MarketDataStream(BaseStreamClient):
             headers=headers,
             on_message=on_message or self._default_message_handler,
         )
+
+    def stream_market_depth_quotes(
+        self,
+        *,
+        symbol: str,
+        max_levels: Optional[int] = 20,
+        on_message=None,
+    ) -> None:
+        """
+        Stream real-time market depth (Level II) quote updates for a symbol.
+
+        Parameters
+        ----------
+        symbol : str
+            Single market symbol (e.g., "AAPL", "MSFT").
+        max_levels : int, optional, default=20
+            Maximum number of bid/ask levels to receive per side.
+            TradeStation supports up to 20.
+        on_message : callable, optional
+            Callback invoked with each parsed JSON message.
+            Example: `lambda msg: print(msg["Bid"][0])`
+
+        Notes
+        -----
+        - This endpoint streams full market depth updates (Level II data).
+        - Stream remains open until `stop()` is called.
+        - Each message may contain price, size, and order count per level.
+        - Requires proper market data subscription (Level II access).
+        """
+
+        if not symbol:
+            raise ValueError("A valid symbol must be provided.")
+
+        url = (
+            "https://api.tradestation.com/v3/marketdata/stream/"
+            f"marketdepth/quotes/{symbol}"
+        )
+
+        headers = {
+            "Authorization": f"Bearer {self.token_manager.get_token()}",
+            "Accept": "application/vnd.tradestation.streams.v2+json",
+        }
+
+        params: Dict[str, str | int] = {
+            "maxlevels": max_levels,
+        }
+        params = {k: v for k, v in params.items() if v is not None}
+
+        self.logger.info(
+            f"Starting market depth stream for {symbol} "
+            f"(max_levels={max_levels})"
+        )
+
+        self.stream_loop(
+            url=url,
+            params=params,
+            headers=headers,
+            on_message=on_message or self._default_message_handler,
+        )
+
