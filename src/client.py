@@ -1,5 +1,5 @@
-from src.endpoints.market_data_stream import MarketDataStream
-from src.endpoints.market_data import MarketDataAPI
+from src.endpoints.mkt_data_stream import MarketDataStream
+from src.endpoints.mkt_data import MarketDataAPI
 from src.endpoints.broker import Brokerage
 
 class TradeStationClient:

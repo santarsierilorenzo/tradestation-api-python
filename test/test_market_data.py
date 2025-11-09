@@ -1,4 +1,4 @@
-from src.endpoints.market_data import MarketDataAPI
+from src.endpoints.mkt_data import MarketDataAPI
 from unittest.mock import MagicMock, patch
 import requests
 import pytest
