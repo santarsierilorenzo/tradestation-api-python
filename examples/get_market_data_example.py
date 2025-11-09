@@ -31,4 +31,8 @@ if __name__ == "__main__":
         unit="Minute",
     )
 
+    # Get symbols detail
+    symbols_detail = ts_client.market_data.get_symbol_details(
+        symbols=["AAPL", "MSFT"]
+    )
 
