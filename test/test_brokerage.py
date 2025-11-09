@@ -267,3 +267,96 @@ def test_get_historical_orders_too_many_accounts(token_manager):
     too_many = [f"A{i}" for i in range(101)]
     with pytest.raises(ValueError, match="Maximum 100 accounts"):
         api.get_historical_orders(accounts=too_many, since=recent_date)
+
+
+@patch.object(Brokerage, "make_request")
+def test_get_historical_orders_by_id_success(mock_make, token_manager):
+    """
+    Ensure get_historical_orders_by_id() builds correct URL and params.
+    """
+    mock_make.return_value = {"Orders": [{"OrderID": "ORD123"}]}
+
+    api = Brokerage(token_manager=token_manager)
+    recent_date = (datetime.now() - timedelta(days=5)).strftime("%Y-%m-%d")
+
+    result = api.get_historical_orders_by_id(
+        accounts=["ACC1"],
+        order_ids=["ORD123"],
+        since=recent_date,
+    )
+
+    assert isinstance(result, dict)
+    assert "Orders" in result
+
+    mock_make.assert_called_once()
+    call = mock_make.call_args.kwargs
+    assert "ACC1" in call["url"]
+    assert "ORD123" in call["url"]
+    assert call["params"]["since"] == recent_date
+
+
+def test_get_historical_orders_by_id_empty_accounts(token_manager):
+    """
+    Ensure ValueError is raised when no accounts are provided.
+    """
+    api = Brokerage(token_manager=token_manager)
+    date_str = datetime.now().strftime("%Y-%m-%d")
+
+    with pytest.raises(ValueError, match="At least one account"):
+        api.get_historical_orders_by_id(
+            accounts=[], order_ids=["O1"], since=date_str
+        )
+
+
+def test_get_historical_orders_by_id_empty_order_ids(token_manager):
+    """
+    Ensure ValueError is raised when no order IDs are provided.
+    """
+    api = Brokerage(token_manager=token_manager)
+    date_str = datetime.now().strftime("%Y-%m-%d")
+
+    with pytest.raises(ValueError, match="At least one order ID"):
+        api.get_historical_orders_by_id(
+            accounts=["ACC1"], order_ids=[], since=date_str
+        )
+
+
+def test_get_historical_orders_by_id_too_many_accounts(token_manager):
+    """
+    Ensure ValueError is raised when more than 100 accounts are provided.
+    """
+    api = Brokerage(token_manager=token_manager)
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    too_many = [f"A{i}" for i in range(101)]
+
+    with pytest.raises(ValueError, match="Maximum 100 accounts"):
+        api.get_historical_orders_by_id(
+            accounts=too_many, order_ids=["O1"], since=date_str
+        )
+
+
+def test_get_historical_orders_by_id_too_many_order_ids(token_manager):
+    """
+    Ensure ValueError is raised when more than 100 order IDs are provided.
+    """
+    api = Brokerage(token_manager=token_manager)
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    too_many = [f"O{i}" for i in range(101)]
+
+    with pytest.raises(ValueError, match="Maximum 100 order IDs"):
+        api.get_historical_orders_by_id(
+            accounts=["ACC1"], order_ids=too_many, since=date_str
+        )
+
+
+def test_get_historical_orders_by_id_date_too_old(token_manager):
+    """
+    Ensure ValueError raised when 'since' exceeds 90-day limit.
+    """
+    api = Brokerage(token_manager=token_manager)
+    old_date = (datetime.now() - timedelta(days=120)).strftime("%Y-%m-%d")
+
+    with pytest.raises(ValueError, match="within the past 90 days"):
+        api.get_historical_orders_by_id(
+            accounts=["ACC1"], order_ids=["O1"], since=old_date
+        )
