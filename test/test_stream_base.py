@@ -1,7 +1,15 @@
 from src.base_client import BaseAPIClient, BaseStreamClient
-from src.endpoints.ts_stream import MarketDataStream
+from src.endpoints.ts_stream import MarketDataStream, BrokerStream
 from unittest.mock import MagicMock, patch
 import pytest
+
+
+@pytest.fixture
+def token_manager():
+    tm = MagicMock()
+    tm.get_token.return_value = "valid_token"
+    tm.refresh_token.return_value = "new_token"
+    return tm
 
 
 @patch("requests.get")
@@ -227,3 +235,16 @@ def test_run_stream_sleeps_when_no_data(mock_sleep):
     client._run_stream("url", {}, {}, MagicMock())
 
     mock_sleep.assert_called_once()
+
+
+@patch.object(BrokerStream, "stream_loop")
+def test_stream_orders_by_id_valid(mock_stream, token_manager):
+    api = BrokerStream(token_manager=token_manager)
+    api.stream_orders_by_id(
+        accounts=["ACC1"],
+        order_ids=["ORD123"],
+    )
+    mock_stream.assert_called_once()
+    args = mock_stream.call_args.kwargs
+    assert "ACC1" in args["url"]
+    assert "ORD123" in args["url"]
