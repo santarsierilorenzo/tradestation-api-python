@@ -1,0 +1,20 @@
+include README.md
+include pyproject.toml
+
+exclude test/*
+exclude test/**
+exclude examples/*
+exclude examples/**
+exclude *.env
+exclude *.sh
+exclude .token.json
+
+exclude .github/*
+exclude .devcontainer/*
+exclude .vscode/*
+exclude .pytest_cache/*
+
+global-exclude __pycache__/*
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
