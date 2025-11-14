@@ -48,7 +48,7 @@ class BaseAPIClient:
 
         resp = _get(params)
         if resp.status_code == 401:
-            token = self.token_manager.refresh_token()
+            token = self.token_manager.get_token()
             headers["Authorization"] = f"Bearer {token}"
             resp = _get(params)
 
@@ -252,7 +252,7 @@ class BaseStreamClient:
                 on_message
             )
             if self._running:
-                time.sleep(3)
+                time.sleep(1)
 
     def stop(self):
         """Stops the active stream loop."""
