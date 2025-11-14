@@ -1,5 +1,7 @@
 from tradestation_python_client.client import TradeStationClient
 from tradestation_python_client.auth import TokenManager
+from dotenv import load_dotenv
+
 import logging
 
 logging.basicConfig(
@@ -8,6 +10,8 @@ logging.basicConfig(
 )
 
 if __name__ == "__main__":
+    load_dotenv()
+
     # Creare un istanza condivisa di TokenManager.
     token_manager = TokenManager(use_sim=True)
 

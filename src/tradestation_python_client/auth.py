@@ -1,5 +1,4 @@
 from typing import Dict, Optional
-from dotenv import load_dotenv
 from threading import Lock
 import requests
 import json
@@ -47,8 +46,7 @@ class TokenManager:
         fields, an empty dictionary is used instead. The `token_data`
         attribute will always hold the current token state.
         """
-        load_dotenv()
-        
+
         self.token_file = token_file
         self.token_data = self._load()
         self.base_auth_url = (
