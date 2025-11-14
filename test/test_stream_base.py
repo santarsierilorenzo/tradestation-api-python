@@ -1,5 +1,8 @@
-from tradestation_api_python.base_client import BaseAPIClient, BaseStreamClient
-from tradestation_api_python.endpoints.ts_stream import (
+from tradestation_python_client.base_client import (
+    BaseAPIClient,
+    BaseStreamClient
+)
+from tradestation_python_client.endpoints.ts_stream import (
     MarketDataStream,
     BrokerStream
 )

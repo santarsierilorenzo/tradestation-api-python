@@ -1,4 +1,4 @@
-from tradestation_api_python.auth import TokenManager
+from tradestation_python_client.auth import TokenManager
 from unittest.mock import patch, MagicMock
 import threading
 import pytest

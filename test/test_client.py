@@ -1,10 +1,10 @@
+from tradestation_python_client.base_client import BaseAPIClient
+from tradestation_python_client.client import TradeStationClient
 from unittest.mock import MagicMock, patch
-from tradestation_api_python.base_client import BaseAPIClient
-from tradestation_api_python.client import TradeStationClient
 import pytest
 
 
-@patch("tradestation_api_python.client.MarketDataAPI")
+@patch("tradestation_python_client.client.MarketDataAPI")
 def test_client_initializes_market_data(mock_market_data):
     """
     Ensure TradeStationClient correctly instantiates MarketDataAPI
@@ -22,7 +22,7 @@ def test_client_initializes_market_data(mock_market_data):
     assert client.market_data == mock_market_data.return_value
 
 
-@patch("tradestation_api_python.base_client.requests.get")
+@patch("tradestation_python_client.base_client.requests.get")
 def test_make_request_refresh_token(mock_get):
     tm = MagicMock()
     tm.get_token.return_value = "new_token"
