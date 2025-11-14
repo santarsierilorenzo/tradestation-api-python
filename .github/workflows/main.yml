@@ -20,6 +20,7 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest
+          pip install -e .        # <--- QUESTA È LA PARTE CHE TI MANCA
 
       - name: Run tests
         run: pytest test/
