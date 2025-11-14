@@ -1,9 +1,9 @@
-# tradestation-api-python
+# tradestation-python-client
 
 <p align="center">
-  <a href="https://github.com/santarsierilorenzo/tradestation-api-python/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/santarsierilorenzo/tradestation-api-python/ci.yml?style=flat-square" alt="CI/CD Pipeline"></a>
-  <a href="https://coveralls.io/github/santarsierilorenzo/tradestation-api-python?branch=main"><img src="https://coveralls.io/repos/github/santarsierilorenzo/tradestation-api-python/badge.svg?branch=main" alt="Code Coverage"/></a>
-  <a href="https://github.com/santarsierilorenzo/tradestation-api-python/releases"><img src="https://img.shields.io/github/v/release/santarsierilorenzo/tradestation-api-python?style=flat-square" alt="Latest Release"></a>
+  <a href="https://github.com/santarsierilorenzo/tradestation-python-client/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/santarsierilorenzo/tradestation-python-client/ci.yml?style=flat-square" alt="CI/CD Pipeline"></a>
+  <a href="https://coveralls.io/github/santarsierilorenzo/tradestation-python-client?branch=main"><img src="https://coveralls.io/repos/github/santarsierilorenzo/tradestation-python-client/badge.svg?branch=main" alt="Code Coverage"/></a>
+  <a href="https://github.com/santarsierilorenzo/tradestation-python-client/releases"><img src="https://img.shields.io/github/v/release/santarsierilorenzo/tradestation-python-client?style=flat-square" alt="Latest Release"></a>
   <img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License">
   <img src="https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey.svg?style=flat-square" alt="Platform">
 </p>
@@ -26,7 +26,7 @@
 &nbsp;
 
 ## ⚠️ Disclaimer & Security
-**tradestation-api-python** is an **unofficial SDK** for interacting with TradeStation APIs.  
+**tradestation-python-client** is an **unofficial SDK** for interacting with TradeStation APIs.  
 It’s designed for research, prototyping, and automated trading integrations.  
 Not affiliated with or endorsed by TradeStation Technologies, Inc.
 
@@ -136,8 +136,8 @@ The SDK includes full Docker + DevContainer support for a reproducible setup.
 
 **1️⃣ Clone the repository**
 ```bash
-git clone https://github.com/santarsierilorenzo/tradestation-api-python
-cd tradestation-api-python
+git clone https://github.com/santarsierilorenzo/tradestation-python-client
+cd tradestation-python-client
 ```
 
 **2️⃣ Open in VS Code and rebuild**
