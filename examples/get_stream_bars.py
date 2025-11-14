@@ -1,7 +1,6 @@
 from tradestation_python_client.client import TradeStationClient
 from tradestation_python_client.auth import TokenManager
 from dotenv import load_dotenv
-
 import logging
 
 logging.basicConfig(

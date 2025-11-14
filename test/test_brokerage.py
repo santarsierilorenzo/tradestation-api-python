@@ -1,4 +1,4 @@
-from tradestation_python_client.endpoints.broker import Brokerage
+from src.tradestation_python_client.endpoints.broker import Brokerage
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta
 import pytest
