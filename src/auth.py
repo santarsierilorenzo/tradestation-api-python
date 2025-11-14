@@ -1,10 +1,12 @@
 from typing import Dict, Optional
+from dotenv import load_dotenv
 from threading import Lock
 import requests
 import json
 import time
 import os
 
+load_dotenv()
 
 class TokenManager:
     """
@@ -24,7 +26,7 @@ class TokenManager:
     def __init__(
         self,
         token_file: Optional[str] = ".token.json",
-        use_sim=True
+        use_sim: Optional[bool] = True
     ) -> None:
         """
         Initialize a TokenManager instance.
@@ -37,7 +39,7 @@ class TokenManager:
         use_sim : bool, optional
             When True, connects to the TradeStation SIM (paper trading)
             environment. When False, uses the LIVE (production) environment.
-            Defaults to False.
+            Defaults to True.
 
         Notes
         -----
@@ -166,12 +168,22 @@ class TokenManager:
 
         if not url:
             raise ValueError("Missing environment variable: TS_TOKEN_URL")
+        
+        refresh_token = self.token_data.get("refresh_token")
+
+        if not refresh_token:
+            refresh_token = os.getenv("TS_REFRESH_TOKEN")
+            if not refresh_token:
+                raise RuntimeError(
+                    "No refresh_token found in token file or environment "
+                    "variables. Cannot refresh the token."
+                )
 
         payload = {
             "grant_type": "refresh_token",
             "client_id": os.getenv("TS_CLIENT_ID"),
             "client_secret": os.getenv("TS_CLIENT_SECRET"),
-            "refresh_token": os.getenv("TS_REFRESH_TOKEN"),
+            "refresh_token": refresh_token,
         }
 
         headers = {
@@ -187,6 +199,7 @@ class TokenManager:
         new_data["refresh_token"] = new_data.get(
             "refresh_token", payload["refresh_token"]
         )
+
 
         self._save(new_data)
         return new_data["access_token"]
