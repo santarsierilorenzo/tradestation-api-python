@@ -18,60 +18,137 @@
 </p>
 
 <p align="center">
-  <b>Fully Thread-Safe · Streaming Ready · Designed for Real-Time Trading</b><br>
-  <i>Developed with ❤️ by Lorenzo Santarsieri · Built for TradeStation APIs</i>
+  <b>Fully Thread-Safe · Streaming Ready</b><br>
+  <i> Built for TradeStation APIs</i>
 </p>
 
 
 &nbsp;
 
-## ⚠️ Disclaimer & Security
-**tradestation-python-client** is an **unofficial SDK** for interacting with TradeStation APIs.  
-It’s designed for research, prototyping, and automated trading integrations.  
-Not affiliated with or endorsed by TradeStation Technologies, Inc.
+`tradestation-python-client` is an **unofficial Python client** for interacting with the TradeStation REST and Streaming APIs.
 
-> ⚡ **By default**, the SDK runs in the **SIM (sandbox)** environment.  
-> To connect to LIVE trading, initialize `TokenManager(use_sim=False)`.
+## 📦 Installation (PyPI Package)
 
-&nbsp;
+Install the package from **PyPI**:
+
+```bash
+pip install tradestation-python-client
+```
+
+Import it in your project:
+
+```python
+from tradestation_python_client import TradeStationClient, TokenManager
+```
+
+This repository also includes a full development environment, but the primary distribution is a **PyPI-installable client**.
+
+
+## ⚠️ Disclaimer
+
+`tradestation-python-client` is an **unofficial Python client** for interacting with the TradeStation REST and Streaming APIs.  
+It is not affiliated with or endorsed by TradeStation Technologies, Inc.
+
+- By default, it connects to the **SIM** (sandbox) environment.
+- To use LIVE trading:
+
+```python
+TokenManager(use_sim=False)
+```
+
 
 ## 🧩 Overview
-This SDK simplifies access to TradeStation endpoints, handling:
-- OAuth2 token management (with automatic refresh & thread safety)
-- REST endpoints for brokerage & market data
-- Streaming (real-time) data connections
-- Multi-threaded data fetching for large historical datasets
+This client provides:
 
-&nbsp;
+- OAuth2 token handling with automatic refresh and thread safety  
+- REST endpoints (Brokerage & Market Data)  
+- Real-time streaming support  
+- Parallel historical data fetching  
+- Clean, modern Python interface  
+
 
 ## 🔧 Core Modules
 
 | Module | Description |
-|--------|--------------|
-| `auth.py` | Manages OAuth2 tokens, refresh logic, and race-condition prevention |
-| `base_client.py` | Low-level HTTP client with retry and error handling |
-| `client.py` | Unified entry point: exposes all TradeStation API services |
-| `endpoints/broker.py` | Account, balance, orders & positions |
-| `endpoints/mkt_data.py` | Historical & live market data |
+|--------|-------------|
+| `auth.py` | OAuth2 token management with thread-safe refresh |
+| `base_client.py` | HTTP layer with retries, timeouts, and error handling |
+| `client.py` | Main high-level interface for all services |
+| `endpoints/broker.py` | Orders, balances, positions, accounts |
+| `endpoints/mkt_data.py` | Historical + intraday market data |
 | `endpoints/ts_stream.py` | Real-time streaming (bars, quotes, orders, etc.) |
 
-<br>
+## 🧪 Testing
 
-## ⚙️ Concurrency and Streaming
+Run the test suite:
 
-### 🧵 Thread Safety
-`TokenManager` ensures only one thread refreshes tokens at a time using a global lock (`threading.Lock`).
+```bash
+pytest -v
+```
 
-### ⚡ Parallel Data Fetch
-`get_bars_between()` automatically splits large historical queries into smaller API chunks and fetches them concurrently using `ThreadPoolExecutor`.
+Includes tests for:
+
+- Token refresh  
+- Thread safety  
+- Streaming message parsing  
+- HTTP error handling  
+
+
+## 🧰 Development Environment (DevContainer + Docker)
+
+For contributors or advanced users, the repository provides a fully reproducible development environment.
+
+### Prerequisites
+
+- Docker Desktop  
+- Visual Studio Code  
+- Dev Containers extension  
+
+### Setup
+
+#### 1️⃣ Clone the repository
+
+```bash
+git clone https://github.com/santarsierilorenzo/tradestation-python-client
+cd tradestation-python-client
+```
+
+#### 2️⃣ Open inside DevContainer
+
+```
+Ctrl + Shift + P → Dev Containers: Rebuild Without Cache and Reopen
+```
+
+#### 3️⃣ Configure environment variables
+
+Create a `.env` file:
+
+```env
+TS_CLIENT_ID=your_client_id
+TS_CLIENT_SECRET=your_client_secret
+TS_REFRESH_TOKEN=your_refresh_token
+```
+
+#### 4️⃣ Run an example
+
+```bash
+python -m examples.get_market_data_example
+```
+
+## ⚙️ Usage Examples
+
+### Basic Initialization
 
 ```python
-from src.client import TradeStationClient
-from src.auth import TokenManager
+from tradestation_python_client import TradeStationClient, TokenManager
 
 token_manager = TokenManager(use_sim=True)
 ts = TradeStationClient(token_manager=token_manager)
+```
 
+### Parallel Historical Data Fetching
+
+```python
 data = ts.market_data.get_bars_between(
     symbol="AAPL",
     first_date="2025-01-01",
@@ -82,20 +159,9 @@ data = ts.market_data.get_bars_between(
 )
 ```
 
-✅ Automatically merges partial results and sorts chronologically.
-
-<br>
-
-## 🧠 Streaming
-Example of subscribing to real-time market bars:
+### Real-Time Streaming
 
 ```python
-from src.client import TradeStationClient
-from src.auth import TokenManager
-
-token_manager = TokenManager(use_sim=True)
-ts = TradeStationClient(token_manager=token_manager)
-
 ts.market_data_stream.stream_bars(
     symbol="AAPL",
     interval=1,
@@ -104,66 +170,6 @@ ts.market_data_stream.stream_bars(
 )
 ```
 
-Streaming endpoints auto-reconnect and use a built-in keep-alive mechanism.
-
-<br>
-
-## 🧪 Testing
-
-Run the test suite to validate functionality:
-
-```bash
-pytest -v
-```
-
-Covers:
-- REST requests & token refresh
-- Concurrency / lock behavior
-- Streaming message parsing & reconnection
-
-<br>
-
-## 🧰 Development Setup
-
-The SDK includes full Docker + DevContainer support for a reproducible setup.
-
-### Prerequisites
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [Visual Studio Code](https://code.visualstudio.com/)
-- [Dev Containers Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
-
-### 🧑‍💻 Setup Steps
-
-**1️⃣ Clone the repository**
-```bash
-git clone https://github.com/santarsierilorenzo/tradestation-python-client
-cd tradestation-python-client
-```
-
-**2️⃣ Open in VS Code and rebuild**
-```bash
-Ctrl + Shift + P  →  Dev Containers: Rebuild Without Cache and Reopen in Container
-```
-
-**3️⃣ Configure environment**
-Create a `.env` file at the root with your TradeStation credentials:
-
-```bash
-TS_CLIENT_ID=your_client_id
-TS_CLIENT_SECRET=your_client_secret
-TS_REFRESH_TOKEN=your_refresh_token
-```
-
-**4️⃣ Run inside the container**
-Open an integrated terminal and test:
-
-```bash
-python -m examples.get_market_data_example
-```
-
-> 🧩 This setup ensures a clean, isolated environment without polluting your host system.
-
-<br>
 
 ## 🪪 License
 MIT © 2025 — Developed with ❤️ by Lorenzo Santarsieri
