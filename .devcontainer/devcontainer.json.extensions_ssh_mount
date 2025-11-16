@@ -16,11 +16,11 @@
   ],
 
   "mounts": [
-    "source=${localWorkspaceFolder},target=/${localWorkspaceFolderBasename},type=bind",
+    "source=${localWorkspaceFolder},target=/workspace,type=bind"
     "source=${localEnv:HOME}/.ssh,target=/home/myuser/.ssh,type=bind,readonly,consistency=cached"
   ],
   
-  "workspaceFolder": "/${localWorkspaceFolderBasename}",
+  "workspaceFolder": "/workspace",
   "remoteUser": "myuser",
 
   "customizations": {
@@ -38,8 +38,8 @@
   },
 
   "containerEnv": {
-    "PYTHONPATH": "/${localWorkspaceFolderBasename}"
+    "PYTHONPATH": "/workspace"
   },
 
-  "postCreateCommand": "./setup.sh"
+  "postCreateCommand": "bash ./setup.sh"
 }
